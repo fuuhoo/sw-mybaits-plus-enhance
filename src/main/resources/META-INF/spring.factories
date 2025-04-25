@@ -1,0 +1,2 @@
+org.springframework.context.ApplicationContextInitializer=\
+cn.siwei.fubin.swmybatisenhance.initializer.MyApplicationContextInitializer
