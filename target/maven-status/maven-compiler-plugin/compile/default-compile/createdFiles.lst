@@ -27,6 +27,7 @@ cn\siwei\fubin\swmybatisenhance\model\TimeFilterModel.class
 cn\siwei\fubin\swmybatisenhance\util\ClassNameConvertUtil.class
 cn\siwei\fubin\swmybatisenhance\aspect\DeleteRefCheckAspect.class
 cn\siwei\fubin\swmybatisenhance\annotation\VoExtendList.class
+cn\siwei\fubin\swmybatisenhance\helper\UpdateNumCheckHelper.class
 cn\siwei\fubin\swmybatisenhance\mapper\BaseMapperPlus.class
 cn\siwei\fubin\swmybatisenhance\util\StringUtils.class
 cn\siwei\fubin\swmybatisenhance\validator\ForeignKeyValidator.class
