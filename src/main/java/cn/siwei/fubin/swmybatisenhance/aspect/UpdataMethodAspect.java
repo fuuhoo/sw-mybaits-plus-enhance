@@ -43,7 +43,10 @@ public class UpdataMethodAspect {
                 for (Field field : fields) {
                     TableId idAnno = field.getAnnotation(TableId.class);
                     Updatable updateAnno = field.getAnnotation(Updatable.class);
-                    boolean b = updateAnno.throwExpect();
+                    boolean allowUpdate=false;
+                    if(!ObjectUtils.isEmpty(updateAnno)){
+                        allowUpdate = updateAnno.allowedUpdate();
+                    }
 
                     if (!ObjectUtils.isEmpty(idAnno)) {
                         Object invoke;
@@ -73,7 +76,7 @@ public class UpdataMethodAspect {
                             invoke= getmethod.invoke(arg);
 
                             if (!ObjectUtils.isEmpty(invoke)) {
-                                if(b){
+                                if(!allowUpdate){
                                     throw new MyDbException("字段禁止更新:"+idAnno.value());
                                 }else {
                                     Object invoke1 = setmethod.invoke(arg, new Object[]{null});

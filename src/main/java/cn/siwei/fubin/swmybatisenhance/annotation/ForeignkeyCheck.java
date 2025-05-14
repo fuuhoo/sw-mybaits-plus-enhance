@@ -25,10 +25,16 @@ public @interface ForeignkeyCheck {
 
     String message() default "数据不存在";
 
-    //必须得有
-    Class<?>[] groups() default {};
-//
-    Class<? extends Payload>[] payload() default {};
 
+    /**
+     * 必须包含以下两个属性
+     * 否则会报错 error msg: contains Constraint annotation, but does not contain a groups parameter.
+     *
+     * @return
+     */
+
+    Class<?>[] groups() default {};
+
+    Class<? extends Payload>[] payload() default {};
 
 }

@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Updatable {
-    boolean throwExpect() default false;
+    boolean allowedUpdate() default true;
 }
