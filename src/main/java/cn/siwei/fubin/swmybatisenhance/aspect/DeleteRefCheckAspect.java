@@ -3,8 +3,6 @@ package cn.siwei.fubin.swmybatisenhance.aspect;
 
 import cn.siwei.fubin.swmybatisenhance.annotation.DeleteRefCheck;
 import cn.siwei.fubin.swmybatisenhance.annotation.DeleteRefCheckList;
-import cn.siwei.fubin.BaseException;
-
 import cn.siwei.fubin.swmybatisenhance.helper.CheckRefHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -58,7 +56,7 @@ public class DeleteRefCheckAspect {
                 Serializable arg =(Serializable) args[index];
                 Boolean aBoolean = checkRefHelper.CheckRefByForeignID(aClass, refFieldName, arg);
                 if (aBoolean){
-                    throw  new BaseException(meaasge);
+                    throw  new RuntimeException(meaasge);
                 }
             }
             index = index + 1;

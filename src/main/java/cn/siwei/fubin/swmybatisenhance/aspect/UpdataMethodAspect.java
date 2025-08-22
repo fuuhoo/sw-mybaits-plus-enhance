@@ -1,6 +1,5 @@
 package cn.siwei.fubin.swmybatisenhance.aspect;
 
-import cn.siwei.fubin.BaseException;
 import cn.siwei.fubin.swmybatisenhance.annotation.Updatable;
 import cn.siwei.fubin.swmybatisenhance.annotation.UpdateMethod;
 import cn.siwei.fubin.swmybatisenhance.exception.MyDbException;
@@ -56,10 +55,10 @@ public class UpdataMethodAspect {
 
                         }catch (Exception e){
                             e.printStackTrace();
-                            throw new BaseException("发生内部错误,更新失败");
+                            throw new RuntimeException("发生内部错误,更新失败");
                         }
                         if(ObjectUtils.isEmpty(invoke)){
-                            throw  new BaseException("id不可为空");
+                            throw  new RuntimeException("id不可为空");
                         }
                     }
                     //传了不可更新的字段，由原来的抛出异常修改为不做任何处理

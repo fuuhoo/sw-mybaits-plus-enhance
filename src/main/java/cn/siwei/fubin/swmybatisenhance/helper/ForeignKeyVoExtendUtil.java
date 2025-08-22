@@ -1,15 +1,13 @@
 package cn.siwei.fubin.swmybatisenhance.helper;
 
 import cn.siwei.fubin.swmybatisenhance.annotation.SysDictVoExtend;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.ReflectUtil;
 import cn.siwei.fubin.swmybatisenhance.annotation.VoExtend;
 import cn.siwei.fubin.swmybatisenhance.annotation.VoExtendList;
 import cn.siwei.fubin.swmybatisenhance.constant.VoExtendType;
 import cn.siwei.fubin.swmybatisenhance.mapper.EmptyMapper;
 import cn.siwei.fubin.swmybatisenhance.model.PageData;
 import cn.siwei.fubin.swmybatisenhance.util.BeanCopyUtils;
+import cn.siwei.fubin.swmybatisenhance.util.ReflectUtil;
 import cn.siwei.fubin.swmybatisenhance.util.StringUtils;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
@@ -32,10 +30,10 @@ import java.util.stream.Collectors;
 public class ForeignKeyVoExtendUtil {
 
     public static <T, V> V copy(T source, Class<V> desc) {
-        if (ObjectUtil.isNull(source)) {
+        if (ObjectUtils.isEmpty(source)) {
             return null;
         }
-        if (ObjectUtil.isNull(desc)) {
+        if (ObjectUtils.isEmpty(desc)) {
             return null;
         }
         final V target = ReflectUtil.newInstanceIfPossible(desc);
@@ -44,10 +42,10 @@ public class ForeignKeyVoExtendUtil {
 
 
     public static <T, V> V copy(T source, V desc) {
-        if (ObjectUtil.isNull(source)) {
+        if (ObjectUtils.isEmpty(source)) {
             return null;
         }
-        if (ObjectUtil.isNull(desc)) {
+        if (ObjectUtils.isEmpty(desc)) {
             return null;
         }
 
@@ -59,10 +57,10 @@ public class ForeignKeyVoExtendUtil {
 
 
     public static <T, V> V getExtendName(T source, Class<V> desc) {
-        if (ObjectUtil.isNull(source)) {
+        if (ObjectUtils.isEmpty(source)) {
             return null;
         }
-        if (ObjectUtil.isNull(desc)) {
+        if (ObjectUtils.isEmpty(desc)) {
             return null;
         }
         //先复制原来有属性
@@ -187,11 +185,11 @@ public class ForeignKeyVoExtendUtil {
      **/
     public static <T, V> List<V> getExtendNameList(List<T> sourceList, Class<V> desc) {
 
-        if (ObjectUtil.isNull(sourceList)) {
+        if (ObjectUtils.isEmpty(sourceList)) {
             return null;
         }
-        if (CollUtil.isEmpty(sourceList)) {
-            return CollUtil.newArrayList();
+        if (ObjectUtils.isEmpty(sourceList)) {
+            return Collections.EMPTY_LIST;
         }
         //要返回的新的List对象
         List<V> voList = BeanCopyUtils.copyList(sourceList, desc);

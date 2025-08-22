@@ -1,6 +1,5 @@
 package cn.siwei.fubin.swmybatisenhance.validator;
 
-import cn.siwei.fubin.BaseException;
 
 import cn.siwei.fubin.swmybatisenhance.annotation.ForeignkeyCheck;
 import cn.siwei.fubin.swmybatisenhance.exception.MyDbException;

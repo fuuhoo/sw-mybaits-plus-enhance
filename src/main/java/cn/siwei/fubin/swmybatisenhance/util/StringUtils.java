@@ -1,331 +1,168 @@
 package cn.siwei.fubin.swmybatisenhance.util;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.Validator;
-import cn.hutool.core.util.StrUtil;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import org.springframework.util.AntPathMatcher;
-
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 字符串工具类
  *
  * @author Lion Li
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class StringUtils extends org.apache.commons.lang3.StringUtils {
+
+
+public class StringUtils {
 
     public static final String SEPARATOR = ",";
+    public static final String EMPTY = "";
+
+    private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[A-Z]");
+    private static final Pattern URL_PATTERN = Pattern.compile("^(https?://).+");
+    private static final Pattern WILDCARD_PATTERN = Pattern.compile("\\?|\\*|\\*\\*");
 
     /**
-     * @description: 大写变下划线小写
-    **/        
-
-
-    public static String camel4underline(String param){
-        Pattern p=Pattern.compile("[A-Z]");
-        if(param==null ||param.equals("")){
-            return "";
-        }
-        StringBuilder builder=new StringBuilder(param);
-        Matcher mc=p.matcher(param);
-        int i=0;
-        while(mc.find()){
-            builder.replace(mc.start()+i, mc.end()+i, "_"+mc.group().toLowerCase());
-            i++;
+     * 驼峰转下划线命名
+     */
+    public static String camel4underline(String param) {
+        if (param == null || param.isEmpty()) {
+            return EMPTY;
         }
 
-        if('_' == builder.charAt(0)){
-            builder.deleteCharAt(0);
+        Matcher matcher = UPPERCASE_PATTERN.matcher(param);
+        StringBuffer result = new StringBuffer();
+
+        while (matcher.find()) {
+            matcher.appendReplacement(result, "_" + matcher.group().toLowerCase());
         }
-        return builder.toString();
+
+        matcher.appendTail(result);
+
+        if (result.charAt(0) == '_') {
+            return result.substring(1);
+        }
+        return result.toString();
     }
 
     /**
-     * @description: 根据字段名获取方法名
-    **/        
-
-    public static String getGetMethodName(String fildeName) {
-//        byte[] items = fildeName.getBytes();
-//        items[0] = (byte) ((char) items[0] - 'a' + 'A');
-//        String s = new String(items);
-//        return "get"+s;
-        char firstChar = Character.toUpperCase(fildeName.charAt(0));
-
-//        //如果第二个字母为大写
-//        if(fildeName.length()>2) {
-//            char secondChar = fildeName.charAt(1);
-//            if(secondChar>='A'&&secondChar<='Z'&&firstChar>='a'&&firstChar<='z'){
-//
-//            }
-//        }
-        StringBuilder sb = new StringBuilder();
-        sb.append(firstChar);
-        sb.append(fildeName.substring(1));
-
-        return "get"+sb;
+     * 根据字段名获取getter方法名
+     */
+    public static String getGetMethodName(String fieldName) {
+        if (isEmpty(fieldName)) {
+            return EMPTY;
+        }
+        return "get" + capitalize(fieldName);
     }
 
-    public static String getSetMethodName(String fildeName) {
-        char firstChar = Character.toUpperCase(fildeName.charAt(0));
-        StringBuilder sb = new StringBuilder();
-        sb.append(firstChar);
-        sb.append(fildeName.substring(1));
-
-        return "set"+sb;
-    }
-    
-    
     /**
-     * 获取参数不为空值
-     *
-     * @param str defaultValue 要判断的value
-     * @return value 返回值
+     * 根据字段名获取setter方法名
+     */
+    public static String getSetMethodName(String fieldName) {
+        if (isEmpty(fieldName)) {
+            return EMPTY;
+        }
+        return "set" + capitalize(fieldName);
+    }
+
+    // 首字母大写
+    private static String capitalize(String str) {
+        if (isEmpty(str)) {
+            return str;
+        }
+        return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    }
+
+    /**
+     * 空白值返回默认值
      */
     public static String blankToDefault(String str, String defaultValue) {
-        return StrUtil.blankToDefault(str, defaultValue);
+        return isBlank(str) ? defaultValue : str;
     }
 
     /**
-     * * 判断一个字符串是否为空串
-     *
-     * @param str String
-     * @return true：为空 false：非空
+     * 判断字符串是否为空（null或空字符串）
      */
     public static boolean isEmpty(String str) {
-        return StrUtil.isEmpty(str);
+        return str == null || str.isEmpty();
     }
 
     /**
-     * * 判断一个字符串是否为非空串
-     *
-     * @param str String
-     * @return true：非空串 false：空串
+     * 判断字符串是否非空
      */
     public static boolean isNotEmpty(String str) {
         return !isEmpty(str);
     }
 
     /**
-     * 去空格
+     * 去除字符串两端空白
      */
     public static String trim(String str) {
-        return StrUtil.trim(str);
+        return str == null ? null : str.trim();
     }
 
     /**
-     * 截取字符串
-     *
-     * @param str   字符串
-     * @param start 开始
-     * @return 结果
+     * 截取字符串（从开始到结尾）
      */
     public static String substring(final String str, int start) {
-        return substring(str, start, str.length());
+        if (str == null) {
+            return null;
+        }
+        if (start < 0) {
+            start = 0;
+        }
+        return start < str.length() ? str.substring(start) : EMPTY;
     }
 
     /**
-     * 截取字符串
-     *
-     * @param str   字符串
-     * @param start 开始
-     * @param end   结束
-     * @return 结果
+     * 截取字符串（指定起止位置）
      */
     public static String substring(final String str, int start, int end) {
-        return StrUtil.sub(str, start, end);
+        if (str == null) {
+            return null;
+        }
+        if (start < 0) start = 0;
+        if (end > str.length()) end = str.length();
+        return start < end ? str.substring(start, end) : EMPTY;
     }
 
     /**
-     * 格式化文本, {} 表示占位符<br>
-     * 此方法只是简单将占位符 {} 按照顺序替换为参数<br>
-     * 如果想输出 {} 使用 \\转义 { 即可，如果想输出 {} 之前的 \ 使用双转义符 \\\\ 即可<br>
-     * 例：<br>
-     * 通常使用：format("this is {} for {}", "a", "b") -> this is a for b<br>
-     * 转义{}： format("this is \\{} for {}", "a", "b") -> this is {} for a<br>
-     * 转义\： format("this is \\\\{} for {}", "a", "b") -> this is \a for b<br>
-     *
-     * @param template 文本模板，被替换的部分用 {} 表示
-     * @param params   参数值
-     * @return 格式化后的文本
+     * 格式化文本（使用{}占位符）
      */
     public static String format(String template, Object... params) {
-        return StrUtil.format(template, params);
-    }
-
-    /**
-     * 是否为http(s)://开头
-     *
-     * @param link 链接
-     * @return 结果
-     */
-    public static boolean ishttp(String link) {
-        return Validator.isUrl(link);
-    }
-
-    /**
-     * 字符串转set
-     *
-     * @param str 字符串
-     * @param sep 分隔符
-     * @return set集合
-     */
-    public static Set<String> str2Set(String str, String sep) {
-        return new HashSet<>(str2List(str, sep, true, false));
-    }
-
-    /**
-     * 字符串转list
-     *
-     * @param str         字符串
-     * @param sep         分隔符
-     * @param filterBlank 过滤纯空白
-     * @param trim        去掉首尾空白
-     * @return list集合
-     */
-    public static List<String> str2List(String str, String sep, boolean filterBlank, boolean trim) {
-        List<String> list = new ArrayList<>();
-        if (isEmpty(str)) {
-            return list;
+        if (isEmpty(template) ){
+            return template;
+        }
+        if (params == null || params.length == 0) {
+            return template.replace("\\{}", "{}");
         }
 
-        // 过滤空白字符串
-        if (filterBlank && StringUtils.isBlank(str)) {
-            return list;
-        }
-        String[] split = str.split(sep);
-        for (String string : split) {
-            if (filterBlank && StringUtils.isBlank(string)) {
-                continue;
-            }
-            if (trim) {
-                string = trim(string);
-            }
-            list.add(string);
-        }
-
-        return list;
-    }
-
-    /**
-     * 查找指定字符串是否包含指定字符串列表中的任意一个字符串同时串忽略大小写
-     *
-     * @param cs                  指定字符串
-     * @param searchCharSequences 需要检查的字符串数组
-     * @return 是否包含任意一个字符串
-     */
-    public static boolean containsAnyIgnoreCase(CharSequence cs, CharSequence... searchCharSequences) {
-        return StrUtil.containsAnyIgnoreCase(cs, searchCharSequences);
-    }
-
-    /**
-     * 驼峰转下划线命名
-     */
-    public static String toUnderScoreCase(String str) {
-        return StrUtil.toUnderlineCase(str);
-    }
-
-    /**
-     * 是否包含字符串
-     *
-     * @param str  验证字符串
-     * @param strs 字符串组
-     * @return 包含返回true
-     */
-    public static boolean inStringIgnoreCase(String str, String... strs) {
-        return StrUtil.equalsAnyIgnoreCase(str, strs);
-    }
-
-    /**
-     * 将下划线大写方式命名的字符串转换为驼峰式。如果转换前的下划线大写方式命名的字符串为空，则返回空字符串。 例如：HELLO_WORLD->HelloWorld
-     *
-     * @param name 转换前的下划线大写方式命名的字符串
-     * @return 转换后的驼峰式命名的字符串
-     */
-    public static String convertToCamelCase(String name) {
-        return StrUtil.upperFirst(StrUtil.toCamelCase(name));
-    }
-
-    /**
-     * 驼峰式命名法 例如：user_name->userName
-     */
-    public static String toCamelCase(String s) {
-        return StrUtil.toCamelCase(s);
-    }
-
-    /**
-     * 查找指定字符串是否匹配指定字符串列表中的任意一个字符串
-     *
-     * @param str  指定字符串
-     * @param strs 需要检查的字符串数组
-     * @return 是否匹配
-     */
-    public static boolean matches(String str, List<String> strs) {
-        if (isEmpty(str) || CollUtil.isEmpty(strs)) {
-            return false;
-        }
-        for (String pattern : strs) {
-            if (isMatch(pattern, str)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 判断url是否与规则配置:
-     * ? 表示单个字符;
-     * * 表示一层路径内的任意字符串，不可跨层级;
-     * ** 表示任意层路径;
-     *
-     * @param pattern 匹配规则
-     * @param url     需要匹配的url
-     */
-    public static boolean isMatch(String pattern, String url) {
-        AntPathMatcher matcher = new AntPathMatcher();
-        return matcher.match(pattern, url);
-    }
-
-    /**
-     * 数字左边补齐0，使之达到指定长度。注意，如果数字转换为字符串后，长度大于size，则只保留 最后size个字符。
-     *
-     * @param num  数字对象
-     * @param size 字符串指定长度
-     * @return 返回数字的字符串格式，该字符串为指定长度。
-     */
-    public static String padl(final Number num, final int size) {
-        return padl(num.toString(), size, '0');
-    }
-
-    /**
-     * 字符串左补齐。如果原始字符串s长度大于size，则只保留最后size个字符。
-     *
-     * @param s    原始字符串
-     * @param size 字符串指定长度
-     * @param c    用于补齐的字符
-     * @return 返回指定长度的字符串，由原字符串左补齐或截取得到。
-     */
-    public static String padl(final String s, final int size, final char c) {
-        final StringBuilder sb = new StringBuilder(size);
-        if (s != null) {
-            final int len = s.length();
-            if (s.length() <= size) {
-                for (int i = size - len; i > 0; i--) {
+        StringBuilder sb = new StringBuilder();
+        int paramIndex = 0;
+        for (int i = 0; i < template.length(); i++) {
+            char c = template.charAt(i);
+            if (c == '{') {
+                if (i + 1 < template.length() && template.charAt(i + 1) == '}') {
+                    if (paramIndex < params.length) {
+                        sb.append(params[paramIndex++]);
+                        i++; // 跳过下一个字符 '}'
+                    } else {
+                        sb.append("{}");
+                        i++;
+                    }
+                } else {
                     sb.append(c);
                 }
-                sb.append(s);
+            } else if (c == '\\' && i + 1 < template.length()) {
+                char next = template.charAt(i + 1);
+                if (next == '{' || next == '\\') {
+                    sb.append(next);
+                    i++; // 跳过转义字符
+                } else {
+                    sb.append(c);
+                }
             } else {
-                return s.substring(len - size, len);
-            }
-        } else {
-            for (int i = size; i > 0; i--) {
                 sb.append(c);
             }
         }
@@ -333,54 +170,210 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils {
     }
 
     /**
-     * 切分字符串(分隔符默认逗号)
-     *
-     * @param str 被切分的字符串
-     * @return 分割后的数据列表
+     * 检查是否为http/https链接
+     */
+    public static boolean ishttp(String link) {
+        return link != null && URL_PATTERN.matcher(link).matches();
+    }
+
+    /**
+     * 字符串转Set
+     */
+    public static Set<String> str2Set(String str, String sep) {
+        return new HashSet<>(str2List(str, sep, true, false));
+    }
+
+    /**
+     * 字符串转List
+     */
+    public static List<String> str2List(String str, String sep,
+                                        boolean filterBlank, boolean trim) {
+        if (isEmpty(str)) {
+            return Collections.emptyList();
+        }
+
+        return Stream.of(str.split(sep))
+                .map(s -> trim ? s.trim() : s)
+                .filter(s -> !filterBlank || !isBlank(s))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 检查字符串是否空白（null/空字符串/纯空白字符）
+     */
+    public static boolean isBlank(String str) {
+        return str == null || str.trim().isEmpty();
+    }
+
+    /**
+     * 忽略大小写检查是否包含任意子串
+     */
+    public static boolean containsAnyIgnoreCase(CharSequence cs, CharSequence... searchSeq) {
+        if (cs == null || searchSeq == null) {
+            return false;
+        }
+        String str = cs.toString().toLowerCase();
+        for (CharSequence seq : searchSeq) {
+            if (seq != null && str.contains(seq.toString().toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 驼峰转下划线命名（别名）
+     */
+    public static String toUnderScoreCase(String str) {
+        return camel4underline(str);
+    }
+
+    /**
+     * 检查字符串是否在集合中（忽略大小写）
+     */
+    public static boolean inStringIgnoreCase(String str, String... strs) {
+        if (str == null || strs == null) {
+            return false;
+        }
+        return Stream.of(strs)
+                .anyMatch(s -> s != null && s.equalsIgnoreCase(str));
+    }
+
+    /**
+     * 下划线转大驼峰命名（首字母大写）
+     */
+    public static String convertToCamelCase(String name) {
+        return capitalize(toCamelCase(name));
+    }
+
+    /**
+     * 下划线转小驼峰命名（首字母小写）
+     */
+    public static String toCamelCase(String s) {
+        if (isEmpty(s)) {
+            return s;
+        }
+
+        StringBuilder result = new StringBuilder();
+        boolean nextUpper = false;
+
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '_') {
+                nextUpper = true;
+            } else {
+                if (nextUpper) {
+                    result.append(Character.toUpperCase(c));
+                    nextUpper = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    /**
+     * 通配符匹配
+     */
+    public static boolean matches(String str, List<String> patterns) {
+        if (isEmpty(str) || patterns == null || patterns.isEmpty()) {
+            return false;
+        }
+        return patterns.stream().anyMatch(pattern -> isMatch(pattern, str));
+    }
+
+    /**
+     * 通配符匹配实现
+     */
+    public static boolean isMatch(String pattern, String url) {
+        if (pattern == null || url == null) {
+            return false;
+        }
+
+        // 用 Matcher 循环，先 find 再 group
+        Matcher m = WILDCARD_PATTERN.matcher(pattern);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String matched = m.group();   // 此时 find() 已保证匹配成功
+            String replacement;
+            switch (matched) {
+                case "?":  replacement = ".";      break;
+                case "*":  replacement = "[^/]*";  break;
+                case "**": replacement = ".*";     break;
+                default:   replacement = matched;  // 理论上不会走到这里
+            }
+            m.appendReplacement(sb, replacement);
+        }
+        m.appendTail(sb);
+
+        String regex = sb.toString().replace("/", "\\/");
+        regex = "^" + regex + "$";
+        return Pattern.compile(regex).matcher(url).matches();
+    }
+
+    /**
+     * 数字左侧补零
+     */
+    public static String padl(final Number num, final int size) {
+        return num != null ? padl(num.toString(), size, '0') : null;
+    }
+
+    /**
+     * 字符串左侧补字符
+     */
+    public static String padl(final String s, final int size, final char c) {
+        if (s == null) {
+            return repeat(c, size);
+        }
+
+        if (s.length() >= size) {
+            return s.substring(s.length() - size);
+        }
+
+        return repeat(c, size - s.length()) + s;
+    }
+
+    // 重复字符
+    private static String repeat(char c, int count) {
+        char[] chars = new char[count];
+        Arrays.fill(chars, c);
+        return new String(chars);
+    }
+
+    /**
+     * 分割字符串（默认逗号分隔）
      */
     public static List<String> splitList(String str) {
-        return splitTo(str, Convert::toStr);
+        return splitTo(str, String::valueOf);
     }
 
     /**
-     * 切分字符串
-     *
-     * @param str       被切分的字符串
-     * @param separator 分隔符
-     * @return 分割后的数据列表
+     * 分割字符串（指定分隔符）
      */
     public static List<String> splitList(String str, String separator) {
-        return splitTo(str, separator, Convert::toStr);
+        return splitTo(str, separator, String::valueOf);
     }
 
     /**
-     * 切分字符串自定义转换(分隔符默认逗号)
-     *
-     * @param str    被切分的字符串
-     * @param mapper 自定义转换
-     * @return 分割后的数据列表
+     * 分割并转换（默认逗号分隔）
      */
-    public static <T> List<T> splitTo(String str, Function<? super Object, T> mapper) {
+    public static <T> List<T> splitTo(String str, Function<Object, T> mapper) {
         return splitTo(str, SEPARATOR, mapper);
     }
 
     /**
-     * 切分字符串自定义转换
-     *
-     * @param str       被切分的字符串
-     * @param separator 分隔符
-     * @param mapper    自定义转换
-     * @return 分割后的数据列表
+     * 分割并转换（指定分隔符）
      */
-    public static <T> List<T> splitTo(String str, String separator, Function<? super Object, T> mapper) {
-        if (StringUtils.isBlank(str)) {
-            return new ArrayList<>(0);
+    public static <T> List<T> splitTo(String str, String separator, Function<Object, T> mapper) {
+        if (isBlank(str)) {
+            return Collections.emptyList();
         }
-        return StrUtil.split(str, separator)
-            .stream()
-            .filter(Objects::nonNull)
-            .map(mapper)
-            .collect(Collectors.toList());
-    }
 
+        return Stream.of(str.split(separator))
+                .map(String::trim)
+                .filter(StringUtils::isNotEmpty)
+                .map(mapper)
+                .collect(Collectors.toList());
+    }
 }

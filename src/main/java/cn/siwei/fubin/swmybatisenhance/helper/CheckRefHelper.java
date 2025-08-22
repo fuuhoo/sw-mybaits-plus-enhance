@@ -1,6 +1,5 @@
 package cn.siwei.fubin.swmybatisenhance.helper;
 
-import cn.siwei.fubin.BaseException;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -38,7 +37,7 @@ public class CheckRefHelper {
                 return false;
             }
         }catch (Exception e){
-            throw new BaseException("数据执行失败:"+e.toString());
+            throw new RuntimeException("数据执行失败:"+e.toString());
         }
 
     }

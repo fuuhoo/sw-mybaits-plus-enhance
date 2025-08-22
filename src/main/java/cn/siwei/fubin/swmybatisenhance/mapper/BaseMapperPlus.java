@@ -1,7 +1,6 @@
 package cn.siwei.fubin.swmybatisenhance.mapper;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
+
 import cn.siwei.fubin.swmybatisenhance.util.BeanCopyUtils;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -10,9 +9,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
+import org.springframework.util.ObjectUtils;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
      */
     default <C> C selectVoById(Serializable id, Class<C> voClass) {
         T obj = this.selectById(id);
-        if (ObjectUtil.isNull(obj)) {
+        if (ObjectUtils.isEmpty(obj)) {
             return null;
         }
         return BeanCopyUtils.copy(obj, voClass);
@@ -91,8 +92,8 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
      */
     default <C> List<C> selectVoBatchIds(Collection<? extends Serializable> idList, Class<C> voClass) {
         List<T> list = this.selectBatchIds(idList);
-        if (CollUtil.isEmpty(list)) {
-            return CollUtil.newArrayList();
+        if (ObjectUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
         }
         return BeanCopyUtils.copyList(list, voClass);
     }
@@ -103,8 +104,8 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
      */
     default <C> List<C> selectVoByMap(Map<String, Object> map, Class<C> voClass) {
         List<T> list = this.selectByMap(map);
-        if (CollUtil.isEmpty(list)) {
-            return CollUtil.newArrayList();
+        if (ObjectUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
         }
         return BeanCopyUtils.copyList(list, voClass);
     }
@@ -116,7 +117,7 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
      */
     default <C> C selectVoOne(Wrapper<T> wrapper, Class<C> voClass) {
         T obj = this.selectOne(wrapper);
-        if (ObjectUtil.isNull(obj)) {
+        if (ObjectUtils.isEmpty(obj)) {
             return null;
         }
         return BeanCopyUtils.copy(obj, voClass);
@@ -128,8 +129,8 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
      */
     default <C> List<C> selectVoList(Wrapper<T> wrapper, Class<C> voClass) {
         List<T> list = this.selectList(wrapper);
-        if (CollUtil.isEmpty(list)) {
-            return CollUtil.newArrayList();
+        if (ObjectUtils.isEmpty(list)) {
+            return Collections.EMPTY_LIST;
         }
         return BeanCopyUtils.copyList(list, voClass);
     }
@@ -141,7 +142,7 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
     default <C, P extends IPage<C>> P selectVoPage(IPage<T> page, Wrapper<T> wrapper, Class<C> voClass) {
         IPage<T> pageData = this.selectPage(page, wrapper);
         IPage<C> voPage = new Page<>(pageData.getCurrent(), pageData.getSize(), pageData.getTotal());
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        if (ObjectUtils.isEmpty(pageData.getRecords())) {
             return (P) voPage;
         }
         voPage.setRecords(BeanCopyUtils.copyList(pageData.getRecords(), voClass));

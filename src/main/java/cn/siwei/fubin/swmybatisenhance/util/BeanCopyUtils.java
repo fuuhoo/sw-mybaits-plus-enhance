@@ -1,17 +1,14 @@
 package cn.siwei.fubin.swmybatisenhance.util;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.SimpleCache;
-import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.core.util.StrUtil;
+
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.cglib.beans.BeanCopier;
 import org.springframework.cglib.beans.BeanMap;
 import org.springframework.cglib.core.Converter;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +32,10 @@ public class BeanCopyUtils {
      * @return desc
      */
     public static <T, V> V copy(T source, Class<V> desc) {
-        if (ObjectUtil.isNull(source)) {
+        if (ObjectUtils.isNull(source)) {
             return null;
         }
-        if (ObjectUtil.isNull(desc)) {
+        if (ObjectUtils.isNull(desc)) {
             return null;
         }
         final V target = ReflectUtil.newInstanceIfPossible(desc);
@@ -53,10 +50,10 @@ public class BeanCopyUtils {
      * @return desc
      */
     public static <T, V> V copy(T source, V desc) {
-        if (ObjectUtil.isNull(source)) {
+        if (ObjectUtils.isNull(source)) {
             return null;
         }
-        if (ObjectUtil.isNull(desc)) {
+        if (ObjectUtils.isNull(desc)) {
             return null;
         }
         BeanCopier beanCopier = BeanCopierCache.INSTANCE.get(source.getClass(), desc.getClass(), null);
@@ -72,11 +69,11 @@ public class BeanCopyUtils {
      * @return desc
      */
     public static <T, V> List<V> copyList(List<T> sourceList, Class<V> desc) {
-        if (ObjectUtil.isNull(sourceList)) {
+        if (ObjectUtils.isNull(sourceList)) {
             return null;
         }
-        if (CollUtil.isEmpty(sourceList)) {
-            return CollUtil.newArrayList();
+        if (ObjectUtils.isEmpty(sourceList)) {
+            return Collections.EMPTY_LIST;
         }
         return StreamUtils.toList(sourceList, source -> {
             V target = ReflectUtil.newInstanceIfPossible(desc);
@@ -93,7 +90,7 @@ public class BeanCopyUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> Map<String, Object> copyToMap(T bean) {
-        if (ObjectUtil.isNull(bean)) {
+        if (ObjectUtils.isNull(bean)) {
             return null;
         }
         return BeanMap.create(bean);
@@ -107,10 +104,10 @@ public class BeanCopyUtils {
      * @return bean对象
      */
     public static <T> T mapToBean(Map<String, Object> map, Class<T> beanClass) {
-        if (MapUtil.isEmpty(map)) {
+        if (ObjectUtils.isEmpty(map)) {
             return null;
         }
-        if (ObjectUtil.isNull(beanClass)) {
+        if (ObjectUtils.isNull(beanClass)) {
             return null;
         }
         T bean = ReflectUtil.newInstanceIfPossible(beanClass);
@@ -125,10 +122,10 @@ public class BeanCopyUtils {
      * @return bean对象
      */
     public static <T> T mapToBean(Map<String, Object> map, T bean) {
-        if (MapUtil.isEmpty(map)) {
+        if (ObjectUtils.isEmpty(map)) {
             return null;
         }
-        if (ObjectUtil.isNull(bean)) {
+        if (ObjectUtils.isNull(bean)) {
             return null;
         }
         BeanMap.create(bean).putAll(map);
@@ -143,10 +140,10 @@ public class BeanCopyUtils {
      * @return map对象
      */
     public static <T, V> Map<String, V> mapToMap(Map<String, T> map, Class<V> clazz) {
-        if (MapUtil.isEmpty(map)) {
+        if (ObjectUtils.isEmpty(map)) {
             return null;
         }
-        if (ObjectUtil.isNull(clazz)) {
+        if (ObjectUtils.isNull(clazz)) {
             return null;
         }
         Map<String, V> copyMap = new LinkedHashMap<>(map.size());
@@ -191,7 +188,7 @@ public class BeanCopyUtils {
          * @return 属性名和Map映射的key
          */
         private String genKey(Class<?> srcClass, Class<?> targetClass, Converter converter) {
-            final StringBuilder key = StrUtil.builder()
+            final StringBuilder key =new StringBuilder()
                 .append(srcClass.getName()).append('#').append(targetClass.getName());
             if (null != converter) {
                 key.append('#').append(converter.getClass().getName());
