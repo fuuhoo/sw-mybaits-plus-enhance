@@ -3,10 +3,23 @@ package cn.siwei.fubin.swmybatisenhance.model;
 
 
 
+/**
+ * 分页组件
+*/
 
 public class PageFilterModel {
 
+
+    //页码
+    /**
+     * 页码
+    */
     Integer pageNum=1;
+
+    //分页大小
+    /**
+     * 分页大小
+    */
     Integer pageSize=100;
 
     public Integer getPageNum() {

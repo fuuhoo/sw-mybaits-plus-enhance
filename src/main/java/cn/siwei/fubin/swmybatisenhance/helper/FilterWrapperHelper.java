@@ -12,6 +12,8 @@ import cn.siwei.fubin.swmybatisenhance.util.ClassNameConvertUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -24,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -41,6 +44,10 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Slf4j
 public class FilterWrapperHelper<T> {
 
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+
     public    Map<String, Object> getFilterField(Object oj)  {
         HashMap<String, Object> filterMap = new HashMap<>();
         HashMap<String, Object> eqMap = new HashMap<>();
@@ -48,6 +55,12 @@ public class FilterWrapperHelper<T> {
         HashMap<String, Object> leftMap = new HashMap<>();
         HashMap<String, Object> rightMap = new HashMap<>();
         HashMap<String, Object> listMap = new HashMap<>();
+
+        HashMap<String, Object> jsonListMap = new HashMap<>();
+        HashMap<String, Object> jsonObjectMap = new HashMap<>();
+        HashMap<String, Object> jsonObjListectMap = new HashMap<>();
+
+
 
         if(ObjectUtils.isEmpty(oj)){
             return filterMap;
@@ -64,14 +77,21 @@ public class FilterWrapperHelper<T> {
             boolean b = annotation.ifCamel2UnderLine();
             String name=declaredField.getName();
             String listField = annotation.listField();
+            String aliasName = annotation.aliasName();
 
 
             if(b) {
+
+                //字段名称
                 name = ClassNameConvertUtil.toUnderScoreCase(name);
+
                 listField= ClassNameConvertUtil.toUnderScoreCase(listField);
+
+                aliasName=ClassNameConvertUtil.toUnderScoreCase(aliasName);
             }
 
             FilterTypeEnum type = annotation.type();
+
             Object value = null;
             try {
                 value = declaredField.get(oj);
@@ -93,6 +113,42 @@ public class FilterWrapperHelper<T> {
                     if(!listField.equals("")) {
                         listMap.put(listField, value);
                     }
+                }else if(type.equals(FilterTypeEnum.JSON_LIST)){
+//                    String key="JSON_OVERLAPS("+name+", {0})";
+//                    //如果value是数组，取第一个
+//                    if(value instanceof List){
+//                        value = ((List<?>) value).stream()
+//                                .map(s -> "\"" + s + "\"")
+//                                .collect(Collectors.joining(", ", "(", ")"));
+//                    }
+
+                    try {
+                        String jsonArray = objectMapper.writeValueAsString(value);
+                        String format = String.format("JSON_OVERLAPS(%s,  CAST('%s' AS JSON))", name, jsonArray);
+                        jsonListMap.put(name,format);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException("JSON转换失败", e);
+                    }
+
+                }
+                else if(type.equals(FilterTypeEnum.JSON_OBJ)){
+                    //json obj的字段名,   name 是本字段的字段名
+                    String s = annotation.jsonObjName();
+
+                    if(b) {
+                        s = ClassNameConvertUtil.toUnderScoreCase(s);
+                    }
+                    String key=s+"->>'$."+aliasName+"' > JSON_QUOTE({0})";
+                    jsonObjectMap.put(key,value);
+                }
+                else if(type.equals(FilterTypeEnum.JSON_OBJ_LIST)){
+                    //json obj的字段名,name 是本字段的字段名
+                    String s = annotation.jsonObjName();
+                    if(b) {
+                        s = ClassNameConvertUtil.toUnderScoreCase(s);
+                    }
+                    String key="JSON_CONTAINS("+s+", JSON_OBJECT('"+aliasName+"', JSON_QUOTE({0})))";
+                    jsonObjectMap.put(key,value);
                 }
             }
 
@@ -102,6 +158,9 @@ public class FilterWrapperHelper<T> {
         filterMap.put("left",leftMap);
         filterMap.put("right",rightMap);
         filterMap.put("list",listMap);
+        filterMap.put("jsonList",jsonListMap);
+        filterMap.put("jsonObj",jsonObjectMap);
+
         return filterMap;
     }
 
@@ -120,6 +179,19 @@ public class FilterWrapperHelper<T> {
         QueryWrapper<T> tQueryWrapper = new QueryWrapper<T>();
 
         return getQueryFilterWrapperbyAnotation(tQueryWrapper,oj).lambda();
+    }
+    public LambdaQueryWrapper<T>  getLambdaWrapperbyFiledAnnotion(Object oj,TimeFilterModel tfModerl) {
+
+        QueryWrapper<T> tQueryWrapper = new QueryWrapper<T>();
+
+        return getQueryFilterWrapperbyAnotation(tQueryWrapper,oj,tfModerl).lambda();
+    }
+    public LambdaQueryWrapper<T>  getLambdaWrapperbyFiledAnnotion(Object oj,TimeFilterModel tfModerl,String  timeFiled) {
+
+        QueryWrapper<T> tQueryWrapper = new QueryWrapper<T>();
+
+        return getQueryFilterWrapperbyAnotation(tQueryWrapper,oj,tfModerl,timeFiled).lambda();
+
     }
 
     public  void getBaseFilter(LambdaQueryWrapper< ? extends BaseModel> tQueryWrapper, BaseFilterModel baseFilterModel){
@@ -236,6 +308,36 @@ public class FilterWrapperHelper<T> {
             }
         }
 
+
+
+        Map<String, Object> jsonlistMap = (Map<String, Object>) filterField.get("jsonList");
+        if(!isEmpty(jsonlistMap)) {
+            for (Map.Entry<String, Object> stringObjectEntry : jsonlistMap.entrySet()) {
+                if(!isEmpty(stringObjectEntry.getValue())) {
+                    //被注解的字段的值
+                    String key = stringObjectEntry.getKey();
+                    String value = stringObjectEntry.getValue().toString();
+                    qw.apply(value);
+                }
+            }
+        }
+
+
+        Map<String, Object> jsonObjMap = (Map<String, Object>) filterField.get("jsonObj");
+        if(!isEmpty(jsonObjMap)) {
+            for (Map.Entry<String, Object> stringObjectEntry : jsonObjMap.entrySet()) {
+                if(!isEmpty(stringObjectEntry.getValue())) {
+                    //被注解的字段的值
+                    String key = stringObjectEntry.getKey();
+
+                    Object value = stringObjectEntry.getValue();
+                    //key是构造的json查询条件
+                    qw.apply(key, value);
+                }
+            }
+        }
+
+
         //如果有时间筛选才参数，根据时间进行筛选
         if(!ObjectUtils.isEmpty(tfModerl)){
             String sTime = tfModerl.getSTime();
@@ -246,8 +348,8 @@ public class FilterWrapperHelper<T> {
             if(!ObjectUtils.isEmpty(eTime)){
                 qw.lt(timeFiled,eTime);
             }
-            //增加默认更新时间倒序
-            qw.orderByAsc(timeFiled);
+//            //增加默认更新时间倒序
+//            qw.orderByAsc(timeFiled);
         }
         return qw;
     }

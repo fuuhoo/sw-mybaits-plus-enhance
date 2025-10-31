@@ -14,12 +14,28 @@ import java.util.List;
 @Builder
 public class PageData<T> {
 
+
+    /**
+     * 当前页
+    */
     @Builder.Default
     Long current=0L;
+
+    /**
+     * 当前页大小
+    */
     @Builder.Default
     Long size=0L;
+
+    /**
+     * 总条数
+    */
     @Builder.Default
     Long totalCount=0L;
+
+    /**
+     * 当前页数据
+    */
     @Builder.Default
     List<T> dataList=new ArrayList<>();
 

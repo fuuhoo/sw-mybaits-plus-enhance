@@ -3,6 +3,7 @@ package cn.siwei.fubin.swmybatisenhance.handler;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.extension.handlers.AbstractJsonTypeHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.type.JdbcType;
@@ -10,52 +11,65 @@ import org.apache.ibatis.type.MappedJdbcTypes;
 import org.apache.ibatis.type.MappedTypes;
 
 import java.io.IOException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.List;
 
+/**
+ * Created by angryfun on 2020/7/7.
+ */
 @Slf4j
-@MappedTypes({Object.class})
-@MappedJdbcTypes(JdbcType.VARCHAR)
-public class JacksonListTypeHandler  extends AbstractJsonTypeHandler<Object> {
+@MappedTypes({List.class})
+@MappedJdbcTypes({JdbcType.VARCHAR})
+public abstract class JacksonListTypeHandler<T> extends AbstractJsonTypeHandler<Object> {
+    protected static ObjectMapper objectMapper = new ObjectMapper();
+    private Class<?> type;
 
-    private static ObjectMapper OBJECT_MAPPER;
-    private final Class<?> type;
+    public JacksonListTypeHandler(){}
 
     public JacksonListTypeHandler(Class<?> type) {
-        if (log.isTraceEnabled()) {
+        if(log.isTraceEnabled()) {
             log.trace("JacksonTypeHandler(" + type + ")");
         }
-        Assert.notNull(type, "Type argument cannot be null");
+
+        Assert.notNull(type, "Type argument cannot be null", new Object[0]);
         this.type = type;
     }
 
-
-    @Override
     protected Object parse(String json) {
         try {
-            return getObjectMapper().readValue(json, OBJECT_MAPPER.getTypeFactory().constructParametricType(List.class, type));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Type type = getSuperGenricTypes(this.getClass());
+            JavaType javaType = objectMapper.getTypeFactory().constructType(type);
+            return objectMapper.readValue(json, javaType);
+        } catch (IOException var3) {
+            throw new RuntimeException(var3);
         }
     }
 
-    @Override
     protected String toJson(Object obj) {
         try {
-            return getObjectMapper().writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException var3) {
+            throw new RuntimeException(var3);
         }
-    }
-
-    public static ObjectMapper getObjectMapper() {
-        if (null == OBJECT_MAPPER) {
-            OBJECT_MAPPER = new ObjectMapper();
-        }
-        return OBJECT_MAPPER;
     }
 
     public static void setObjectMapper(ObjectMapper objectMapper) {
-        Assert.notNull(objectMapper, "ObjectMapper should not be null");
-        JacksonListTypeHandler.OBJECT_MAPPER = objectMapper;
+        Assert.notNull(objectMapper, "ObjectMapper should not be null", new Object[0]);
+        objectMapper = objectMapper;
+    }
+
+    public static Type getSuperGenricTypes(final Class<?> clz) {
+        Class<?> superClass = clz;
+        Type type = superClass.getGenericSuperclass();
+        while (superClass != Object.class && !(type instanceof ParameterizedType)) {
+            superClass = superClass.getSuperclass();
+            type = superClass.getGenericSuperclass();
+        }
+        if (superClass == Object.class) {
+            throw new IllegalArgumentException("父类不含泛型类型：" + clz);
+        }
+        return ((ParameterizedType) type).getActualTypeArguments()[0];
     }
 }
+

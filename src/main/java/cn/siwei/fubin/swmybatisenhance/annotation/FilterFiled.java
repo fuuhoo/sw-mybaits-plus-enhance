@@ -15,6 +15,8 @@ import java.lang.annotation.Target;
 public @interface FilterFiled {
     FilterTypeEnum type() default FilterTypeEnum.EQ;
     String listField() default "";
+    String jsonObjName() default "";
+    String aliasName() default "";
     //是否驼峰转下划线
     boolean ifCamel2UnderLine() default true;
 }

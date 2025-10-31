@@ -118,7 +118,7 @@ public class ForeignKeyVoExtendUtil {
 
                     Object idValue = declaredField.get(source);
 
-                    //这部分是反向外键的
+                    //这部分是反向外键的，一对多
                     if (idValue instanceof List) {
                         Method selectList = mpClass.getDeclaredMethod("selectBatchIds", QueryWrapper.class);
                         QueryWrapper<Object> wpper = new QueryWrapper<>();
@@ -126,7 +126,7 @@ public class ForeignKeyVoExtendUtil {
                         Object bean = SpringContextUtils.getBean(mpClass);
                         Object invoke = (List<Class<?>>) selectList.invoke(bean, wpper);
                         field.set(target, invoke);
-                        //这部分类似于外键
+                        //这部分类似于外键，多对一
                     } else if (idValue instanceof Number || idValue instanceof String) {
                         Method selectByIdMethod = mpClass.getMethod("selectById", Serializable.class);
                         Object bean = SpringContextUtils.getBean(mpClass);
@@ -172,6 +172,9 @@ public class ForeignKeyVoExtendUtil {
         vpageData.setCurrent(sourceList.getCurrent());
         vpageData.setTotalCount(sourceList.getTotal());
 
+        if(ObjectUtils.isEmpty(extendNameList)){
+            extendNameList=new ArrayList<>();
+        }
         vpageData.setDataList(extendNameList);
 
         return vpageData;

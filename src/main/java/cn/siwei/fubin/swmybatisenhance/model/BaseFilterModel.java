@@ -1,10 +1,14 @@
 package cn.siwei.fubin.swmybatisenhance.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 
+
 public class BaseFilterModel {
+
     String creatUser;
     String updateUser;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:SS",timezone = "GMT+8")
