@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 
@@ -64,28 +65,29 @@ public class UpdataMethodAspect {
                     //传了不可更新的字段，由原来的抛出异常修改为不做任何处理
 
 
-                    //没有这个注解，且不是id，全部修改为null
+                    //没有可更新注解，且不是id，全部修改为null
                     if (ObjectUtils.isEmpty(updateAnno)&& ObjectUtils.isEmpty(idAnno)) {
-                        Object invoke;
-//                        Method[] methods = parameterType.getMethods();
                         try {
                             Method getmethod = parameterType.getMethod(StringUtils.getGetMethodName(field.getName()));
                             Method setmethod = parameterType.getMethod(StringUtils.getSetMethodName(field.getName()),field.getType());
+                            Object value = getmethod.invoke(arg);
+                            if (!ObjectUtils.isEmpty(value)) {
+                                //不允许更新
+                                if(!allowUpdate&&value!=null) {
+                                    //置null
+                                    setmethod.invoke(arg, new Object[]{null});
+//                                    String name = field.getName();
+//                                    throw new MyDbException("字段禁止更新:" + name);
 
-                            invoke= getmethod.invoke(arg);
-
-                            if (!ObjectUtils.isEmpty(invoke)) {
-                                if(!allowUpdate){
-                                    throw new MyDbException("字段禁止更新:"+idAnno.value());
                                 }else {
-                                    Object invoke1 = setmethod.invoke(arg, new Object[]{null});
+                                     setmethod.invoke(arg, value);
                                 }
 
                             }
-
-                        } catch (Exception e) {
+                        }
+                        catch (NoSuchMethodException| IllegalAccessException | InvocationTargetException e) {
                             e.printStackTrace();
-                            throw new MyDbException("获取值失败,更新失败");
+                            throw new RuntimeException("更新失败:"+e.getMessage());
                         }
 
                     }

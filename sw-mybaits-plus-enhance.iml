@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module version="4">
-  <component name="FacetManager">
-    <facet type="Spring" name="Spring">
-      <configuration />
-    </facet>
+  <component name="AdditionalModuleElements">
+    <content url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.3-SNAPSHOT">
+      <sourceFolder url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.3-SNAPSHOT" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.4-SNAPSHOT">
+      <sourceFolder url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.4-SNAPSHOT" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.5-SNAPSHOT">
+      <sourceFolder url="file://$MODULE_DIR$/../.idea/sources-extracted/sw-mybaits-plus-enhance-0.2.5-SNAPSHOT" isTestSource="false" />
+    </content>
   </component>
 </module>

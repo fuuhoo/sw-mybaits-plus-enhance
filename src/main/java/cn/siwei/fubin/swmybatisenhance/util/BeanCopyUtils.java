@@ -1,28 +1,83 @@
 package cn.siwei.fubin.swmybatisenhance.util;
 
-
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.springframework.cglib.beans.BeanCopier;
-import org.springframework.cglib.beans.BeanMap;
-import org.springframework.cglib.core.Converter;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * bean拷贝工具(基于 cglib 性能优异)
- * <p>
- * 重点 cglib 不支持 拷贝到链式对象
- * 例如: 源对象 拷贝到 目标(链式对象)
+ * bean拷贝工具(不使用cglib，带缓存优化)
  *
  * @author Lion Li
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BeanCopyUtils {
+
+    /**
+     * 属性映射缓存，存储源类和目标类之间的属性对应关系
+     */
+    private static final Map<String, List<PropertyMapping>> PROPERTY_MAPPING_CACHE = new ConcurrentHashMap<>();
+
+    /**
+     * BeanCopier缓存（替代CGLib的BeanCopierCache）
+     * 使用我们自己的实现来模拟BeanCopier的功能
+     */
+    public enum BeanCopierCache {
+        /**
+         * BeanCopier属性缓存单例
+         */
+        INSTANCE;
+
+        /**
+         * 获得类对应的属性映射
+         *
+         * @param srcClass    源Bean的类
+         * @param targetClass 目标Bean的类
+         * @param converter   转换器（暂不支持，保留参数）
+         * @return 虚拟的BeanCopier对象（实际上是我们自己实现的拷贝逻辑）
+         */
+        public BeanCopier get(Class<?> srcClass, Class<?> targetClass, Object converter) {
+            // 这里返回一个虚拟的BeanCopier，实际上调用我们自己的拷贝逻辑
+            return new BeanCopier() {
+                @Override
+                public void copy(Object source, Object target, Object converter) {
+                    // 直接调用我们的拷贝方法
+                    copyInternal(source, target);
+                }
+            };
+        }
+
+        /**
+         * 内部拷贝实现
+         */
+        private void copyInternal(Object source, Object target) {
+            if (ObjectUtils.isNull(source) || ObjectUtils.isNull(target)) {
+                return;
+            }
+
+            List<PropertyMapping> mappings = getPropertyMappings(source.getClass(), target.getClass());
+
+            for (PropertyMapping mapping : mappings) {
+                try {
+                    Object value = mapping.getter.invoke(source);
+                    mapping.setter.invoke(target, value);
+                } catch (Exception e) {
+                    // 忽略无法读取或设置的属性
+                }
+            }
+        }
+    }
+
+    /**
+     * 虚拟的BeanCopier接口
+     */
+    public interface BeanCopier {
+        void copy(Object source, Object target, Object converter);
+    }
 
     /**
      * 单对象基于class创建拷贝
@@ -38,8 +93,12 @@ public class BeanCopyUtils {
         if (ObjectUtils.isNull(desc)) {
             return null;
         }
-        final V target = ReflectUtil.newInstanceIfPossible(desc);
-        return copy(source, target);
+        try {
+            final V target = desc.getDeclaredConstructor().newInstance();
+            return copy(source, target);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create instance of " + desc.getName(), e);
+        }
     }
 
     /**
@@ -56,10 +115,186 @@ public class BeanCopyUtils {
         if (ObjectUtils.isNull(desc)) {
             return null;
         }
+
+        // 使用BeanCopierCache获取"BeanCopier"并执行拷贝
         BeanCopier beanCopier = BeanCopierCache.INSTANCE.get(source.getClass(), desc.getClass(), null);
         beanCopier.copy(source, desc, null);
         return desc;
     }
+
+    /**
+     * 获取属性映射关系（带缓存）
+     */
+    private static List<PropertyMapping> getPropertyMappings(Class<?> sourceClass, Class<?> targetClass) {
+        String cacheKey = sourceClass.getName() + "_" + targetClass.getName();
+
+        return PROPERTY_MAPPING_CACHE.computeIfAbsent(cacheKey, k -> {
+            List<PropertyMapping> mappings = new ArrayList<>();
+
+            // 获取源类的getter方法
+            Map<String, Method> sourceGetters = getGetters(sourceClass);
+            // 获取目标类的setter方法
+            Map<String, Method> targetSetters = getSetters(targetClass);
+
+            // 匹配同名属性
+            for (Map.Entry<String, Method> entry : sourceGetters.entrySet()) {
+                String propertyName = entry.getKey();
+                Method getter = entry.getValue();
+                Method setter = targetSetters.get(propertyName);
+
+                if (setter != null) {
+                    // 检查类型是否兼容
+                    Class<?> getterReturnType = getter.getReturnType();
+                    Class<?> setterParameterType = setter.getParameterTypes()[0];
+
+                    if (isTypeCompatible(getterReturnType, setterParameterType)) {
+                        mappings.add(new PropertyMapping(getter, setter));
+                    }
+                }
+            }
+
+            return mappings;
+        });
+    }
+
+    /**
+     * 获取类的getter方法映射
+     */
+    private static Map<String, Method> getGetters(Class<?> clazz) {
+        Map<String, Method> getters = new HashMap<>();
+        Method[] methods = clazz.getMethods();
+
+        for (Method method : methods) {
+            if (isGetter(method)) {
+                String propertyName = getPropertyNameFromGetter(method);
+                if (propertyName != null) {
+                    getters.put(propertyName, method);
+                }
+            }
+        }
+        return getters;
+    }
+
+    /**
+     * 获取类的setter方法映射
+     */
+    private static Map<String, Method> getSetters(Class<?> clazz) {
+        Map<String, Method> setters = new HashMap<>();
+        Method[] methods = clazz.getMethods();
+
+        for (Method method : methods) {
+            if (isSetter(method)) {
+                String propertyName = getPropertyNameFromSetter(method);
+                if (propertyName != null) {
+                    setters.put(propertyName, method);
+                }
+            }
+        }
+        return setters;
+    }
+
+    /**
+     * 判断方法是否为getter
+     */
+    private static boolean isGetter(Method method) {
+        return (method.getName().startsWith("get") && method.getParameterCount() == 0 &&
+                !void.class.equals(method.getReturnType()))
+                || (method.getName().startsWith("is") && method.getParameterCount() == 0 &&
+                (boolean.class.equals(method.getReturnType()) || Boolean.class.equals(method.getReturnType())));
+    }
+
+    /**
+     * 判断方法是否为setter
+     */
+    private static boolean isSetter(Method method) {
+        return method.getName().startsWith("set") && method.getParameterCount() == 1;
+    }
+
+    /**
+     * 从getter方法获取属性名
+     */
+    private static String getPropertyNameFromGetter(Method method) {
+        String name = method.getName();
+        if (name.startsWith("get") && name.length() > 3) {
+            return Character.toLowerCase(name.charAt(3)) + name.substring(4);
+        } else if (name.startsWith("is") && name.length() > 2) {
+            return Character.toLowerCase(name.charAt(2)) + name.substring(3);
+        }
+        return null;
+    }
+
+    /**
+     * 从setter方法获取属性名
+     */
+    private static String getPropertyNameFromSetter(Method method) {
+        String name = method.getName();
+        if (name.startsWith("set") && name.length() > 3) {
+            return Character.toLowerCase(name.charAt(3)) + name.substring(4);
+        }
+        return null;
+    }
+
+    /**
+     * 判断类型是否兼容
+     */
+    private static boolean isTypeCompatible(Class<?> sourceType, Class<?> targetType) {
+        // 相同类型
+        if (sourceType.equals(targetType)) {
+            return true;
+        }
+
+        // 基本类型和包装类型的兼容性
+        if ((sourceType.isPrimitive() && getWrapperClass(sourceType).equals(targetType)) ||
+                (targetType.isPrimitive() && getWrapperClass(targetType).equals(sourceType))) {
+            return true;
+        }
+
+        // 子类可以赋值给父类
+        if (targetType.isAssignableFrom(sourceType)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * 获取基本类型的包装类
+     */
+    private static Class<?> getWrapperClass(Class<?> primitiveClass) {
+        if (boolean.class.equals(primitiveClass)) return Boolean.class;
+        if (byte.class.equals(primitiveClass)) return Byte.class;
+        if (char.class.equals(primitiveClass)) return Character.class;
+        if (short.class.equals(primitiveClass)) return Short.class;
+        if (int.class.equals(primitiveClass)) return Integer.class;
+        if (long.class.equals(primitiveClass)) return Long.class;
+        if (float.class.equals(primitiveClass)) return Float.class;
+        if (double.class.equals(primitiveClass)) return Double.class;
+        if (void.class.equals(primitiveClass)) return Void.class;
+        return primitiveClass;
+    }
+
+    /**
+     * 属性映射关系内部类
+     */
+    private static class PropertyMapping {
+        private final Method getter;
+        private final Method setter;
+
+        public PropertyMapping(Method getter, Method setter) {
+            this.getter = getter;
+            this.setter = setter;
+        }
+
+        public Method getGetter() {
+            return getter;
+        }
+
+        public Method getSetter() {
+            return setter;
+        }
+    }
+
+    // 以下是其他方法（保持不变）
 
     /**
      * 列表对象基于class创建拷贝
@@ -73,13 +308,16 @@ public class BeanCopyUtils {
             return null;
         }
         if (ObjectUtils.isEmpty(sourceList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        return StreamUtils.toList(sourceList, source -> {
-            V target = ReflectUtil.newInstanceIfPossible(desc);
-            copy(source, target);
-            return target;
-        });
+
+        List<V> result = new ArrayList<>(sourceList.size());
+        for (T source : sourceList) {
+            if (source != null) {
+                result.add(copy(source, desc));
+            }
+        }
+        return result;
     }
 
     /**
@@ -88,12 +326,28 @@ public class BeanCopyUtils {
      * @param bean 数据来源实体
      * @return map对象
      */
-    @SuppressWarnings("unchecked")
     public static <T> Map<String, Object> copyToMap(T bean) {
         if (ObjectUtils.isNull(bean)) {
             return null;
         }
-        return BeanMap.create(bean);
+
+        Map<String, Object> map = new HashMap<>();
+        Method[] methods = bean.getClass().getMethods();
+
+        for (Method method : methods) {
+            if (isGetter(method)) {
+                String propertyName = getPropertyNameFromGetter(method);
+                if (propertyName != null) {
+                    try {
+                        Object value = method.invoke(bean);
+                        map.put(propertyName, value);
+                    } catch (Exception e) {
+                        // 忽略无法读取的属性
+                    }
+                }
+            }
+        }
+        return map;
     }
 
     /**
@@ -110,8 +364,12 @@ public class BeanCopyUtils {
         if (ObjectUtils.isNull(beanClass)) {
             return null;
         }
-        T bean = ReflectUtil.newInstanceIfPossible(beanClass);
-        return mapToBean(map, bean);
+        try {
+            T bean = beanClass.getDeclaredConstructor().newInstance();
+            return mapToBean(map, bean);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create instance of " + beanClass.getName(), e);
+        }
     }
 
     /**
@@ -128,7 +386,19 @@ public class BeanCopyUtils {
         if (ObjectUtils.isNull(bean)) {
             return null;
         }
-        BeanMap.create(bean).putAll(map);
+
+        Map<String, Method> setters = getSetters(bean.getClass());
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Method setter = setters.get(entry.getKey());
+            if (setter != null) {
+                try {
+                    setter.invoke(bean, entry.getValue());
+                } catch (Exception e) {
+                    // 类型不匹配或其他异常，跳过此属性
+                }
+            }
+        }
         return bean;
     }
 
@@ -146,55 +416,11 @@ public class BeanCopyUtils {
         if (ObjectUtils.isNull(clazz)) {
             return null;
         }
+
         Map<String, V> copyMap = new LinkedHashMap<>(map.size());
-        map.forEach((k, v) -> copyMap.put(k, copy(v, clazz)));
+        for (Map.Entry<String, T> entry : map.entrySet()) {
+            copyMap.put(entry.getKey(), copy(entry.getValue(), clazz));
+        }
         return copyMap;
     }
-
-    /**
-     * BeanCopier属性缓存<br>
-     * 缓存用于防止多次反射造成的性能问题
-     *
-     * @author Looly
-     * @since 5.4.1
-     */
-    public enum BeanCopierCache {
-        /**
-         * BeanCopier属性缓存单例
-         */
-        INSTANCE;
-
-        private final SimpleCache<String, BeanCopier> cache = new SimpleCache<>();
-
-        /**
-         * 获得类与转换器生成的key在{@link BeanCopier}的Map中对应的元素
-         *
-         * @param srcClass    源Bean的类
-         * @param targetClass 目标Bean的类
-         * @param converter   转换器
-         * @return Map中对应的BeanCopier
-         */
-        public BeanCopier get(Class<?> srcClass, Class<?> targetClass, Converter converter) {
-            final String key = genKey(srcClass, targetClass, converter);
-            return cache.get(key, () -> BeanCopier.create(srcClass, targetClass, converter != null));
-        }
-
-        /**
-         * 获得类与转换器生成的key
-         *
-         * @param srcClass    源Bean的类
-         * @param targetClass 目标Bean的类
-         * @param converter   转换器
-         * @return 属性名和Map映射的key
-         */
-        private String genKey(Class<?> srcClass, Class<?> targetClass, Converter converter) {
-            final StringBuilder key =new StringBuilder()
-                .append(srcClass.getName()).append('#').append(targetClass.getName());
-            if (null != converter) {
-                key.append('#').append(converter.getClass().getName());
-            }
-            return key.toString();
-        }
-    }
-
 }

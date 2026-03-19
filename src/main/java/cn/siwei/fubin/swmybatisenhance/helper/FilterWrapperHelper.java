@@ -44,11 +44,10 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Slf4j
 public class FilterWrapperHelper<T> {
 
-
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
 
-    public    Map<String, Object> getFilterField(Object oj)  {
+    public   Map<String, Object> getFilterField(Object oj)  {
         HashMap<String, Object> filterMap = new HashMap<>();
         HashMap<String, Object> eqMap = new HashMap<>();
         HashMap<String, Object> likeMap = new HashMap<>();
@@ -343,10 +342,10 @@ public class FilterWrapperHelper<T> {
             String sTime = tfModerl.getSTime();
             String eTime = tfModerl.getETime();
             if(!ObjectUtils.isEmpty(sTime)){
-                qw.gt(timeFiled,sTime);
+                qw.ge(timeFiled,sTime);
             }
             if(!ObjectUtils.isEmpty(eTime)){
-                qw.lt(timeFiled,eTime);
+                qw.le(timeFiled,eTime);
             }
 //            //增加默认更新时间倒序
 //            qw.orderByAsc(timeFiled);

@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
+import com.baomidou.mybatisplus.core.metadata.TableInfo;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import org.springframework.util.ObjectUtils;
@@ -17,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.baomidou.mybatisplus.extension.toolkit.Db.getOne;
 
 public interface BaseMapperPlus<T> extends BaseMapper<T> {
 
@@ -74,6 +77,72 @@ public interface BaseMapperPlus<T> extends BaseMapper<T> {
         return Db.saveOrUpdate(entity);
     }
 
+
+    /**
+     * 根据Wrapper条件判断插入或更新
+     * @param entity 实体对象
+     * @param conditionWrapper 查询条件
+     * @return 操作结果
+     */
+    default boolean insertOrUpdate(T entity, Wrapper<T> conditionWrapper) {
+        if (entity == null) {
+            return false;
+        }
+
+        if (conditionWrapper == null) {
+            // 如果没有条件，使用默认的saveOrUpdate逻辑（基于主键）
+            Object id = getEntityId(entity);
+            if (id != null) {
+                return updateById(entity) > 0;
+            } else {
+                return insert(entity) > 0;
+            }
+        }
+
+        // 根据条件查询现有记录
+        T existing = selectOne(conditionWrapper);
+
+        if (existing != null) {
+            // 存在则更新：复制主键并执行更新
+            copyPrimaryKey(existing, entity);
+            return updateById(entity) > 0;
+        } else {
+            // 不存在则插入
+            return insert(entity) > 0;
+        }
+    }
+
+    /**
+     * 获取实体主键值
+     */
+    default Object getEntityId(T entity) {
+        try {
+            TableInfo tableInfo = TableInfoHelper.getTableInfo(entity.getClass());
+            if (tableInfo != null && tableInfo.havePK()) {
+                return tableInfo.getPropertyValue(entity, tableInfo.getKeyProperty());
+            }
+        } catch (Exception e) {
+            // 静默处理异常
+        }
+        return null;
+    }
+
+    /**
+     * 复制主键值
+     */
+    default void copyPrimaryKey(T source, T target) {
+        try {
+            TableInfo tableInfo = TableInfoHelper.getTableInfo(source.getClass());
+            if (tableInfo != null && tableInfo.havePK()) {
+                Object idValue = tableInfo.getPropertyValue(source, tableInfo.getKeyProperty());
+                if (idValue != null) {
+                    tableInfo.setPropertyValue(target, tableInfo.getKeyProperty(), idValue);
+                }
+            }
+        } catch (Exception e) {
+            // 静默处理异常
+        }
+    }
 
     /**
      * 根据 ID 查询

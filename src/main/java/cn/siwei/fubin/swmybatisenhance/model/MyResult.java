@@ -10,7 +10,7 @@ public class MyResult<T> implements Serializable {
     private int code;
 
     /**
-     * v状态
+     * 状态
     */
     private String status;
 
@@ -38,6 +38,11 @@ public class MyResult<T> implements Serializable {
     }
 
 
+    public MyResult(int code, String status,String message) {
+        this.code = code;
+        this.status = status;
+        this.message = message;
+    }
 
 
     public MyResult(String message,T data) {
@@ -56,6 +61,10 @@ public class MyResult<T> implements Serializable {
 
     public static MyResult fail(int code,String message) {
         return new MyResult(code,message);
+    }
+
+    public static MyResult fail(int code,String status,String message) {
+        return new MyResult(code,status,message);
     }
 
 

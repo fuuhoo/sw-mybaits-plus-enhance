@@ -4,6 +4,8 @@ package cn.siwei.fubin.swmybatisenhance.annotation;
 
 
 
+import cn.siwei.fubin.swmybatisenhance.group.AddGroup;
+import cn.siwei.fubin.swmybatisenhance.group.EditGroup;
 import cn.siwei.fubin.swmybatisenhance.validator.ForeignKeyValidator;
 
 import javax.validation.Constraint;
@@ -23,8 +25,7 @@ public @interface ForeignkeyCheck {
 
     String foreignId() default "id";
 
-    String message() default "数据不存在";
-
+    String message() default "数据不存在1";
 
     /**
      * 必须包含以下两个属性

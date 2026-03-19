@@ -1,4 +1,5 @@
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\ForeignkeyCheck.java
+H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\handler\BaseListTypeHandler.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\helper\CheckRefHelper.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\ReflectUtil.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\handler\JacksonListTypeHandler.java
@@ -8,6 +9,7 @@ H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swm
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\model\MyResult.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\SysDictVoExtend.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\DeleteRefCheckList.java
+H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\ConditionalDictVoExtend.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\mapper\EmptyMapper.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\SimpleCache.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\DataPermission.java
@@ -19,6 +21,7 @@ H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swm
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\group\EditGroup.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\ClassNameConvertUtil.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\SpringContextUtils.java
+H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\helper\SqlHelper.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\model\PageFilterModel.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\VoExtend.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\aspect\UpdataMethodAspect.java
@@ -37,5 +40,6 @@ H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swm
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\StreamUtils.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\helper\FilterWrapperHelper.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\constant\VoExtendType.java
+H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\util\BeanCopyUtilsCgLib.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\DeleteRefCheck.java
 H:\Project_Java\swadmin\sw-mybaits-plus-enhance\src\main\java\cn\siwei\fubin\swmybatisenhance\annotation\VoExtendList.java

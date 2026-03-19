@@ -5,6 +5,7 @@ import cn.siwei.fubin.swmybatisenhance.annotation.ForeignkeyCheck;
 import cn.siwei.fubin.swmybatisenhance.exception.MyDbException;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import cn.siwei.fubin.swmybatisenhance.util.SpringContextUtils;
 
@@ -12,7 +13,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
+@Component  // 必须添加 @Component 注解
 public class ForeignKeyValidator implements ConstraintValidator<ForeignkeyCheck, Object> {
 
 
@@ -28,15 +29,12 @@ public class ForeignKeyValidator implements ConstraintValidator<ForeignkeyCheck,
         if (ObjectUtils.isEmpty(value)) {
             return true;
         }
-
         try {
-
             Method selectOne = mapperClass.getMethod("selectCount", Wrapper.class);
             QueryWrapper qwp = new QueryWrapper();
             ArrayList<Object> objects = new ArrayList<>();
             objects.add(value);
             qwp.in(idStr, objects);
-
             //可以为空的话空值返回true
             if (canNull) {
                 if (ObjectUtils.isEmpty(value)) {

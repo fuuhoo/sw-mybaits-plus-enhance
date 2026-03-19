@@ -14,7 +14,7 @@ public class PageFilterModel {
     /**
      * 页码
     */
-    Integer pageNum=1;
+    Integer pageNum=0;
 
     //分页大小
     /**
