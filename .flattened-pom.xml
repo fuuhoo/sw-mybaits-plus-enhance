@@ -9,7 +9,7 @@
   </parent>
   <groupId>cn.siwei.fubin</groupId>
   <artifactId>sw-mybaits-plus-enhance</artifactId>
-  <version>0.2.7-SNAPSHOT</version>
+  <version>0.3.2-SNAPSHOT</version>
   <licenses>
     <license>
       <name>Apache License, Version 2.0</name>
@@ -41,6 +41,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-mongodb</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
